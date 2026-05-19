@@ -1,0 +1,26 @@
+# UiPath
+.local/
+.objects/
+.settings/
+.tmh/
+*.nupkg
+
+# Build / IDE
+bin/
+obj/
+.vs/
+.idea/
+*.user
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets — never commit credentials or real data
+.env
+*.secret
+secrets/
+real-data/
+
+# Logs
+*.log
