@@ -1,0 +1,67 @@
+[
+  {
+    "id": "ATO-10001",
+    "source_system": "synthetic-scan-aggregator-v1",
+    "title": "Weak TLS cipher suite enabled on internal API",
+    "raw_description": "Scanner detected TLS_RSA_WITH_3DES_EDE_CBC_SHA enabled on internal service endpoint. Synthetic data, no real system.",
+    "severity_hint": "Low",
+    "suggested_nist_control": "SC-13",
+    "evidence_refs": ["mock-evidence/scan-2026-05-22-001.txt"],
+    "timestamp": "2026-05-22T10:00:00Z",
+    "confidence_inputs": {"scanner_confidence": 0.94, "control_match_score": 0.91},
+    "finding_type": "auto_clearable",
+    "_notes": "Clean low-severity finding with high agent confidence. Expected outcome: agent auto-clears."
+  },
+  {
+    "id": "ATO-10002",
+    "source_system": "synthetic-scan-aggregator-v1",
+    "title": "Unusual outbound traffic pattern from logging subnet",
+    "raw_description": "Anomaly detector flagged traffic spike but root cause not identified. Synthetic data.",
+    "severity_hint": "Medium",
+    "suggested_nist_control": "SI-4",
+    "evidence_refs": ["mock-evidence/anomaly-2026-05-22-002.txt"],
+    "timestamp": "2026-05-22T10:05:00Z",
+    "confidence_inputs": {"scanner_confidence": 0.55, "control_match_score": 0.48},
+    "finding_type": "low_confidence",
+    "_notes": "Agent confidence below threshold. Expected outcome: escalate to human reviewer."
+  },
+  {
+    "id": "ATO-10003",
+    "source_system": "synthetic-scan-aggregator-v1",
+    "title": "Critical authentication bypass in admin console",
+    "raw_description": "Authenticated session can be replayed to gain admin privileges. Synthetic test finding.",
+    "severity_hint": "Critical",
+    "suggested_nist_control": "IA-2",
+    "evidence_refs": ["mock-evidence/pentest-2026-05-22-003.txt"],
+    "timestamp": "2026-05-22T10:10:00Z",
+    "confidence_inputs": {"scanner_confidence": 0.97, "control_match_score": 0.95},
+    "finding_type": "high_severity",
+    "_notes": "Critical severity. Expected outcome: mandatory human reviewer sign-off regardless of agent confidence."
+  },
+  {
+    "id": "ATO-10004",
+    "source_system": "synthetic-scan-aggregator-v1",
+    "title": "Audit log retention shorter than policy on shared service",
+    "raw_description": "Retention set to 30 days but policy requires 90. May also affect monitoring control. Synthetic.",
+    "severity_hint": "Medium",
+    "suggested_nist_control": "AU-11",
+    "evidence_refs": ["mock-evidence/config-2026-05-22-004.txt"],
+    "timestamp": "2026-05-22T10:15:00Z",
+    "confidence_inputs": {"scanner_confidence": 0.82, "control_match_score": 0.52, "alternate_controls": ["SI-4", "CA-7"]},
+    "finding_type": "conflicting_mapping",
+    "_notes": "Ambiguous NIST control mapping (AU-11 vs SI-4 vs CA-7). Expected outcome: escalate as ambiguous."
+  },
+  {
+    "id": "ATO-10005",
+    "source_system": "synthetic-scan-aggregator-v1",
+    "title": "Configuration drift detected — supporting evidence not attached",
+    "raw_description": "Drift event reported but the linked evidence packet is missing. Synthetic.",
+    "severity_hint": "Medium",
+    "suggested_nist_control": "CM-3",
+    "evidence_refs": [],
+    "timestamp": "2026-05-22T10:20:00Z",
+    "confidence_inputs": {"scanner_confidence": 0.71, "control_match_score": 0.74},
+    "finding_type": "missing_evidence",
+    "_notes": "Empty evidence_refs. Expected outcome: agent requests more evidence via reviewer."
+  }
+]
