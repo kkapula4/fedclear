@@ -1,0 +1,212 @@
+[
+  {
+    "id": "ATO-10001",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.94, match=0.91) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10002",
+    "finding_type": "low_confidence",
+    "agent_decision": "escalate_low_confidence",
+    "reasoning": "Confidence below 0.65 threshold (scanner_confidence=0.55, control_match_score=0.48); escalating to reviewer.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10003",
+    "finding_type": "high_severity",
+    "agent_decision": "escalate_high_severity",
+    "reasoning": "Critical-severity finding requires mandatory human sign-off regardless of confidence scores.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10004",
+    "finding_type": "conflicting_mapping",
+    "agent_decision": "escalate_ambiguous_mapping",
+    "reasoning": "Mapping is ambiguous across 3 controls (AU-11 vs SI-4, CA-7); human judgement required.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10005",
+    "finding_type": "missing_evidence",
+    "agent_decision": "request_more_evidence",
+    "reasoning": "Evidence package is empty; cannot validate without supporting artifacts.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10006",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.96, match=0.93) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10007",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.92, match=0.89) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10008",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.95, match=0.90) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10009",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.93, match=0.88) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10010",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.94, match=0.92) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10011",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.91, match=0.87) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10012",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.90, match=0.88) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10013",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.95, match=0.94) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10014",
+    "finding_type": "auto_clearable",
+    "agent_decision": "auto_clear",
+    "reasoning": "Both confidence scores exceed threshold (scanner=0.93, match=0.92) and severity is Low; agent resolves.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10015",
+    "finding_type": "low_confidence",
+    "agent_decision": "escalate_low_confidence",
+    "reasoning": "Confidence below 0.65 threshold (scanner_confidence=0.58, control_match_score=0.51); escalating to reviewer.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10016",
+    "finding_type": "low_confidence",
+    "agent_decision": "escalate_low_confidence",
+    "reasoning": "Confidence below 0.65 threshold (scanner_confidence=0.49, control_match_score=0.55); escalating to reviewer.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10017",
+    "finding_type": "low_confidence",
+    "agent_decision": "escalate_low_confidence",
+    "reasoning": "Confidence below 0.65 threshold (scanner_confidence=0.52, control_match_score=0.60); escalating to reviewer.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10018",
+    "finding_type": "low_confidence",
+    "agent_decision": "escalate_low_confidence",
+    "reasoning": "Confidence below 0.65 threshold (scanner_confidence=0.47, control_match_score=0.49); escalating to reviewer.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10019",
+    "finding_type": "low_confidence",
+    "agent_decision": "escalate_low_confidence",
+    "reasoning": "Confidence below 0.65 threshold (scanner_confidence=0.53, control_match_score=0.46); escalating to reviewer.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10020",
+    "finding_type": "high_severity",
+    "agent_decision": "escalate_high_severity",
+    "reasoning": "Critical-severity finding requires mandatory human sign-off regardless of confidence scores.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10021",
+    "finding_type": "high_severity",
+    "agent_decision": "escalate_high_severity",
+    "reasoning": "High-severity finding requires mandatory human sign-off regardless of confidence scores.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10022",
+    "finding_type": "high_severity",
+    "agent_decision": "escalate_high_severity",
+    "reasoning": "Critical-severity finding requires mandatory human sign-off regardless of confidence scores.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10023",
+    "finding_type": "high_severity",
+    "agent_decision": "escalate_high_severity",
+    "reasoning": "High-severity finding requires mandatory human sign-off regardless of confidence scores.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10024",
+    "finding_type": "high_severity",
+    "agent_decision": "escalate_high_severity",
+    "reasoning": "High-severity finding requires mandatory human sign-off regardless of confidence scores.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10025",
+    "finding_type": "conflicting_mapping",
+    "agent_decision": "escalate_ambiguous_mapping",
+    "reasoning": "Mapping is ambiguous across 3 controls (SC-7 vs AC-4, SC-32); human judgement required.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10026",
+    "finding_type": "conflicting_mapping",
+    "agent_decision": "escalate_ambiguous_mapping",
+    "reasoning": "Mapping is ambiguous across 2 controls (SC-12 vs SC-28); human judgement required.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10027",
+    "finding_type": "conflicting_mapping",
+    "agent_decision": "escalate_ambiguous_mapping",
+    "reasoning": "Mapping is ambiguous across 2 controls (IA-5 vs AC-2); human judgement required.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10028",
+    "finding_type": "conflicting_mapping",
+    "agent_decision": "escalate_ambiguous_mapping",
+    "reasoning": "Mapping is ambiguous across 2 controls (AU-4 vs SI-4); human judgement required.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10029",
+    "finding_type": "missing_evidence",
+    "agent_decision": "request_more_evidence",
+    "reasoning": "Evidence package is empty; cannot validate without supporting artifacts.",
+    "matches_expected": true
+  },
+  {
+    "id": "ATO-10030",
+    "finding_type": "missing_evidence",
+    "agent_decision": "request_more_evidence",
+    "reasoning": "Evidence package is empty; cannot validate without supporting artifacts.",
+    "matches_expected": true
+  }
+]
