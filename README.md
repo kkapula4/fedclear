@@ -56,10 +56,14 @@ This solution utilizes: **[Coded Agents / Low-code Agents / Both]** — _state e
 
 This solution was built with the assistance of **Claude Code** via **UiPath for Coding Agents**.
 
-- **Tool:** Claude Code (UiPath for Coding Agents)
-- **Contribution:** _[fill: agent scaffolding, Maestro workflow generation, integration code, ...]_
-- **Verifiable evidence:** see [`/docs/coding-agent/`](docs/coding-agent/) — prompt/session
-  exports and screenshots. Evidence reflects actual usage only.
+- **Tool:** Claude Code via UiPath for Coding Agents
+- **Contribution:** Scaffolded and wrote `agents/triage_agent.py` from the CLAUDE.md spec in one
+  build session (3 iterations: initial pass, encoding fix, ambiguous-mapping parser fix).
+  The agent implements all 5 routing rules in pure Python stdlib and achieved 100% accuracy
+  across all 30 synthetic findings on the final run.
+- **Verifiable evidence:** [`docs/coding-agent/2026-05-22-triage-agent-session.md`](docs/coding-agent/2026-05-22-triage-agent-session.md)
+  (full prompt log and iteration notes) and [`agents/triage_report.json`](agents/triage_report.json)
+  (machine-readable per-finding decisions with `matches_expected` flags).
 
 See [CODING_AGENTS.md](CODING_AGENTS.md) for the full evidence index.
 
