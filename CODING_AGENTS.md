@@ -26,7 +26,7 @@ This file backs the **+2 Platform Usage bonus** in AgentHack judging (Phase 1 & 
 
 | Date | What Claude Code did | Evidence file (in `docs/coding-agent/`) |
 |------|----------------------|------------------------------------------|
-|      |                      |                                          |
+| 2026-05-22 | Built `agents/triage_agent.py` from scratch — pure stdlib Python, implements the 5 routing rules from CLAUDE.md, processes `mock-data/findings.json`, outputs `agents/triage_report.json`. Fixed ambiguous-mapping notes parser mid-session. Final run: 100% accuracy on all 30 synthetic findings. | [2026-05-22-triage-agent-session.md](docs/coding-agent/2026-05-22-triage-agent-session.md) |
 
 ## Capture convention (do this as you build, not at the end)
 
