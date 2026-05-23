@@ -1,0 +1,10 @@
+SYNTHETIC EVIDENCE FILE — FedClear AgentHack 2026
+Finding reference: ATO-1004
+Source: synthetic-scan-aggregator-v1
+Topic: Generic synthetic evidence
+Generated: 2026-05-22 (mock data only, no real systems referenced)
+
+This is a synthetic evidence artifact created for FedClear demonstration purposes.
+It is referenced from mock-data/findings.json and exists to support end-to-end
+testing of the Evidence assembly stage. No real agency data, no real system
+identifiers, no PII present.
