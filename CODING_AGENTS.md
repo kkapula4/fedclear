@@ -27,6 +27,7 @@ This file backs the **+2 Platform Usage bonus** in AgentHack judging (Phase 1 & 
 | Date | What Claude Code did | Evidence file (in `docs/coding-agent/`) |
 |------|----------------------|------------------------------------------|
 | 2026-05-22 | Built `agents/triage_agent.py` from scratch — pure stdlib Python, implements the 5 routing rules from CLAUDE.md, processes `mock-data/findings.json`, outputs `agents/triage_report.json`. Fixed ambiguous-mapping notes parser mid-session. Final run: 100% accuracy on all 30 synthetic findings. | [2026-05-22-triage-agent-session.md](docs/coding-agent/2026-05-22-triage-agent-session.md) |
+| 2026-05-26 | Built FedClear Triage Agent in UiPath Agent Builder (gpt-5.4, Precise, max_iterations=1) — system prompt encodes 5 routing rules from triage_agent.py. Published as v1.0.0. Verified 5/5 decision paths against Python reference (100% agreement, all reasoning lines cite correct rule). Built Agentic Process BPMN with service task wired to Maestro Case Triage stage. End-to-end debug run: 7 s, agent_decision=auto_clear, Error=null. 7 screenshots captured. | [2026-05-26-uipath-agent-build.md](docs/coding-agent/2026-05-26-uipath-agent-build.md) |
 
 ## Capture convention (do this as you build, not at the end)
 
