@@ -1,0 +1,4 @@
+{
+  "FindingID": "ATO-10019",
+  "FindingJSON": "{\"id\": \"ATO-10019\", \"source_system\": \"synthetic-scan-aggregator-v1\", \"title\": \"Idle session timeout exceeds recommended threshold on admin portal\", \"raw_description\": \"Admin portal session timeout configured to 60 minutes; policy requires 15 minutes. Configuration drift only — no active exploitation observed. Synthetic data, no real system.\", \"severity_hint\": \"Low\", \"suggested_nist_control\": \"AC-12\", \"evidence_refs\": [\"mock-evidence/scan-2026-05-22-019.txt\"], \"timestamp\": \"2026-06-04T09:00:00Z\", \"confidence_inputs\": {\"scanner_confidence\": 0.96, \"control_match_score\": 0.94}, \"finding_type\": \"auto_clearable\", \"_notes\": \"Rule 1 auto_clear regression test — low severity, single clean NIST mapping (AC-12), full evidence present, high confidence, no alternate_controls. Safe to delete after SCRUM-28 sign-off.\"}"
+}
