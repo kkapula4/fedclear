@@ -1,0 +1,4 @@
+{
+  "FindingID": "ATO-10022",
+  "FindingJSON": "{\"id\": \"ATO-10022\", \"source_system\": \"synthetic-scan-aggregator-v1\", \"title\": \"Minor version patch lag on internal documentation server\", \"raw_description\": \"Internal wiki server running one minor version behind current release; no CVE in the delta, patch window within policy. Configuration drift only — no exploit path available. Synthetic data, no real system.\", \"severity_hint\": \"Low\", \"suggested_nist_control\": \"SI-2\", \"evidence_refs\": [\"mock-evidence/scan-2026-05-22-022.txt\"], \"timestamp\": \"2026-06-04T09:45:00Z\", \"confidence_inputs\": {\"scanner_confidence\": 0.96, \"control_match_score\": 0.94}, \"finding_type\": \"auto_clearable\", \"_notes\": \"Rule 1 auto_clear regression test — low severity, single clean NIST mapping (SI-2), full evidence present, high confidence, no alternate_controls. Safe to delete after SCRUM-28 sign-off.\"}"
+}
