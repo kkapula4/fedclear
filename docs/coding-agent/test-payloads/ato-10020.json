@@ -1,0 +1,4 @@
+{
+  "FindingID": "ATO-10020",
+  "FindingJSON": "{\"id\": \"ATO-10020\", \"source_system\": \"synthetic-scan-aggregator-v1\", \"title\": \"Audit log timestamp format non-compliant with RFC 3339 on utility host\", \"raw_description\": \"Utility host emitting audit log timestamps in local-time ISO 8601 without UTC offset; policy requires RFC 3339 with explicit offset. Configuration drift only — no log gaps or data loss. Synthetic data, no real system.\", \"severity_hint\": \"Low\", \"suggested_nist_control\": \"AU-3\", \"evidence_refs\": [\"mock-evidence/scan-2026-05-22-020.txt\"], \"timestamp\": \"2026-06-04T09:15:00Z\", \"confidence_inputs\": {\"scanner_confidence\": 0.95, \"control_match_score\": 0.92}, \"finding_type\": \"auto_clearable\", \"_notes\": \"Rule 1 auto_clear regression test — low severity, single clean NIST mapping (AU-3), full evidence present, high confidence, no alternate_controls. Safe to delete after SCRUM-28 sign-off.\"}"
+}

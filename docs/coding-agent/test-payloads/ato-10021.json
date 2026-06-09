@@ -1,0 +1,4 @@
+{
+  "FindingID": "ATO-10021",
+  "FindingJSON": "{\"id\": \"ATO-10021\", \"source_system\": \"synthetic-scan-aggregator-v1\", \"title\": \"Unused administrative service enabled on batch processing host\", \"raw_description\": \"SSH management daemon running on batch host with no active sessions or scheduled use; service should be disabled per least-functionality baseline. Configuration drift only — no inbound connections observed. Synthetic data, no real system.\", \"severity_hint\": \"Low\", \"suggested_nist_control\": \"CM-7\", \"evidence_refs\": [\"mock-evidence/scan-2026-05-22-021.txt\"], \"timestamp\": \"2026-06-04T09:30:00Z\", \"confidence_inputs\": {\"scanner_confidence\": 0.97, \"control_match_score\": 0.93}, \"finding_type\": \"auto_clearable\", \"_notes\": \"Rule 1 auto_clear regression test — low severity, single clean NIST mapping (CM-7), full evidence present, high confidence, no alternate_controls. Safe to delete after SCRUM-28 sign-off.\"}"
+}

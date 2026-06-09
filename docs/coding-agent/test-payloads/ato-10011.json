@@ -1,0 +1,4 @@
+{
+  "FindingID": "ATO-10011",
+  "FindingJSON": "{\"id\": \"ATO-10011\", \"source_system\": \"synthetic-scan-aggregator-v1\", \"title\": \"Weak TLS cipher suite enabled on internal API\", \"raw_description\": \"Scanner detected TLS_RSA_WITH_3DES_EDE_CBC_SHA enabled on internal service endpoint. Synthetic data, no real system.\", \"severity_hint\": \"Low\", \"suggested_nist_control\": \"SC-13\", \"evidence_refs\": [\"mock-evidence/scan-2026-05-22-001.txt\"], \"timestamp\": \"2026-05-22T10:00:00Z\", \"confidence_inputs\": {\"scanner_confidence\": 0.94, \"control_match_score\": 0.91}, \"finding_type\": \"auto_clearable\", \"_notes\": \"v1.0.4 verification test — safe to delete after SCRUM-28 sign-off\"}"
+}

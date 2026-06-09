@@ -1,0 +1,631 @@
+import React, { useState, useEffect, useMemo, useRef } from "react";
+
+// ---------------------------------------------------------------------------
+// FedClear — Adjudication Console (fancy build)
+// Self-contained demo dashboard. Mock data modeled on the real ATO records and
+// the five agent decision labels. No network / auth required.
+// HITL is shown via iconographic agent-core vs reviewer glyphs (no stock photos).
+// ---------------------------------------------------------------------------
+
+const STAGES = [
+  { name: "Intake", actor: "human" },
+  { name: "Triage", actor: "agent" },
+  { name: "Evidence", actor: "human" },
+  { name: "Review", actor: "human" },
+  { name: "Sign-off", actor: "human" },
+];
+
+const DECISIONS = {
+  auto_clear: { label: "Auto-clear", tone: "agent", skipsReview: true },
+  escalate_high_severity: { label: "Escalate · High severity", tone: "alert", skipsReview: false },
+  escalate_ambiguous_mapping: { label: "Escalate · Ambiguous mapping", tone: "alert", skipsReview: false },
+  request_more_evidence: { label: "Request more evidence", tone: "warn", skipsReview: false },
+  escalate_low_confidence: { label: "Escalate · Low confidence", tone: "warn", skipsReview: false },
+};
+
+const FINDINGS = [
+  { id: "ATO-10030", title: "Standard audit log configuration", control: "AU-2", severity: "Low", decision: "auto_clear", scanner: 0.97, match: 0.95, evidence: ["scan-2026-05-22-030.txt"], rule: "Rule 5", reasoning: "Clean AU-2 mapping with high scanner and control-match confidence; evidence present and no gaps. Eligible for automatic clearance without human review." },
+  { id: "ATO-10031", title: "Exposed admin interface on public subnet", control: "SC-7", severity: "High", decision: "escalate_high_severity", scanner: 0.91, match: 0.88, evidence: ["scan-2026-05-22-031.txt"], rule: "Rule 3", reasoning: "Severity is High with an internet-facing management port. Boundary protection gap (SC-7) requires human adjudication before any disposition." },
+  { id: "ATO-10013", title: "Conflicting NIST control mapping", control: "AC-17 / IA-2", severity: "Medium", decision: "escalate_ambiguous_mapping", scanner: 0.74, match: 0.52, evidence: ["scan-2026-05-26-013.txt"], rule: "Rule 2", reasoning: "Alternate controls present (AC-17, IA-2) with comparable match scores. Mapping is ambiguous; reviewer must confirm the controlling reference." },
+  { id: "ATO-10007", title: "Incomplete evidence for retention policy", control: "AU-11", severity: "Low", decision: "request_more_evidence", scanner: 0.69, match: 0.71, evidence: [], rule: "Rule 1", reasoning: "No evidence artifacts attached to substantiate the retention control. Cannot adjudicate until supporting evidence is supplied." },
+  { id: "ATO-10006", title: "Encryption-at-rest scanner uncertainty", control: "SC-28", severity: "Medium", decision: "escalate_low_confidence", scanner: 0.48, match: 0.63, evidence: ["scan-2026-05-22-006.txt"], rule: "Rule 4", reasoning: "Scanner confidence below threshold (0.65). The detection itself is uncertain; routed for human verification rather than automated disposition." },
+  { id: "ATO-10032", title: "Standard audit log configuration", control: "AU-2", severity: "Low", decision: "auto_clear", scanner: 0.97, match: 0.95, evidence: ["scan-2026-05-22-032.txt"], rule: "Rule 5", reasoning: "Clean AU-2 mapping, high confidence on both axes, evidence attached. Auto-cleared; Review stage bypassed by policy." },
+  { id: "ATO-10025", title: "Session-timeout control verified", control: "AC-12", severity: "Low", decision: "auto_clear", scanner: 0.96, match: 0.93, evidence: ["scan-2026-05-30-025.txt"], rule: "Rule 5", reasoning: "AC-12 session controls verified with high confidence and supporting evidence. No anomalies; eligible for automatic clearance." },
+  { id: "ATO-10018", title: "Privileged access without MFA", control: "IA-2", severity: "High", decision: "escalate_high_severity", scanner: 0.93, match: 0.9, evidence: ["scan-2026-05-29-018.txt"], rule: "Rule 3", reasoning: "High-severity privileged-access finding (IA-2). Requires human reviewer sign-off before remediation disposition." },
+];
+
+const TONE = {
+  agent: { fg: "#3A9AAB", bg: "rgba(58,154,171,0.12)", ring: "rgba(58,154,171,0.45)" },
+  alert: { fg: "#C24A4A", bg: "rgba(194,74,74,0.12)", ring: "rgba(194,74,74,0.45)" },
+  warn: { fg: "#C99238", bg: "rgba(201,146,56,0.14)", ring: "rgba(201,146,56,0.45)" },
+};
+
+function laneFor(finding, tick) {
+  const speed = 0.55 + ((parseInt(finding.id.slice(-2)) % 5) * 0.13);
+  const pos = (tick * speed + (parseInt(finding.id.slice(-2)) % 7)) % (STAGES.length + 1.5);
+  const d = DECISIONS[finding.decision];
+  let lane = Math.min(Math.floor(pos), STAGES.length - 1);
+  if (d.skipsReview && lane === 3) lane = 4;
+  return lane;
+}
+
+export default function FedClearConsole() {
+  const [tick, setTick] = useState(0);
+  const [selected, setSelected] = useState(FINDINGS[1]);
+  const [paused, setPaused] = useState(false);
+  const reduce = useRef(typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  useEffect(() => {
+    if (paused || reduce.current) return;
+    const t = setInterval(() => setTick((x) => x + 0.018), 90);
+    return () => clearInterval(t);
+  }, [paused]);
+
+  const stats = useMemo(() => {
+    const total = FINDINGS.length;
+    const auto = FINDINGS.filter((f) => f.decision === "auto_clear").length;
+    const esc = FINDINGS.filter((f) => DECISIONS[f.decision].tone === "alert").length;
+    return { total, auto, esc, rate: Math.round((auto / total) * 100) };
+  }, []);
+
+  const tickerIdx = Math.floor(tick / 3) % FINDINGS.length;
+
+  return (
+    <div style={S.root}>
+      <style>{CSS}</style>
+
+      <header style={S.header}>
+        <div style={S.brandRow}>
+          <div className="seal-spin" style={S.seal} aria-hidden><Seal /></div>
+          <div>
+            <h1 style={S.h1}>FedClear</h1>
+            <p style={S.tagline}>Agentic ATO Compliance Adjudication · NIST 800-53</p>
+          </div>
+        </div>
+        <div style={S.headerMeta}>
+          <CountMetric value={stats.total} label="Active findings" />
+          <CountMetric value={stats.rate} suffix="%" label="Auto-cleared" accent="#5BC2D4" />
+          <CountMetric value={stats.esc} label="Escalated" accent="#E08A8A" />
+          <button style={S.pauseBtn} className="pause-btn" onClick={() => setPaused((p) => !p)}>
+            {paused ? "▶ Resume" : "❚❚ Pause"}
+          </button>
+        </div>
+      </header>
+
+      <div style={S.ticker}>
+        <span style={S.tickerDot} className="ticker-pulse" />
+        <span style={S.tickerLabel}>Now adjudicating</span>
+        <span style={S.tickerId}>{FINDINGS[tickerIdx].id}</span>
+        <span style={S.tickerSep}>·</span>
+        <span style={S.tickerText}>{FINDINGS[tickerIdx].title}</span>
+        <span style={S.tickerCtrl}>{FINDINGS[tickerIdx].control}</span>
+      </div>
+
+      <div style={S.split} data-split>
+        {/* LEFT — pipeline */}
+        <section style={S.pipelinePane}>
+          <SectionLabel n="01" title="Adjudication pipeline" sub="Findings advance through five stages. The AI agent triages; humans hold the gates. Auto-cleared cases bypass Review." />
+
+          <div style={S.rail}>
+            {STAGES.map((s, i) => {
+              const isAgent = s.actor === "agent";
+              const isReview = s.name === "Review";
+              const isFinal = s.name === "Sign-off";
+              const liveCount = FINDINGS.filter((f) => laneFor(f, tick) === i).length;
+              return (
+                <div key={s.name} style={S.railCol}>
+                  <div
+                    className={isAgent ? "agent-node" : ""}
+                    style={{
+                      ...S.railNode,
+                      ...(isReview ? S.railNodeReview : {}),
+                      ...(isFinal ? S.railNodeFinal : {}),
+                      ...(isAgent ? S.railNodeAgent : {}),
+                    }}
+                  >
+                    <div style={S.railHead}>
+                      <span style={S.glyphWrap}>{isAgent ? <AgentGlyph /> : <HumanGlyph />}</span>
+                      <span style={S.railNum}>{String(i + 1).padStart(2, "0")}</span>
+                    </div>
+                    <span style={S.railName}>{s.name}</span>
+                    <span style={{ ...S.actorTag, color: isAgent ? "#3A9AAB" : "rgba(10,31,60,0.45)" }}>
+                      {isAgent ? "AI agent" : "human review"}
+                    </span>
+                    {liveCount > 0 && <span style={S.liveCount}>{liveCount}</span>}
+                  </div>
+                  {i < STAGES.length - 1 && (
+                    <div style={S.railConnector}>
+                      <div className="flow-dash" style={S.flowDash} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <div style={S.bypassNote}>
+              <span style={S.bypassDash} /> auto-clear bypass
+            </div>
+          </div>
+
+          <div style={S.flowCaption}>
+            <span style={S.flowCaptionTitle}>Findings in flight</span>
+            <span style={S.flowCaptionHint}>position shows current stage · left to right</span>
+          </div>
+          <div style={S.flowArea}>
+            {/* stage labels + faint grid behind the rows */}
+            <div style={S.flowColHead} aria-hidden>
+              {STAGES.map((s) => (
+                <div key={s.name} style={S.flowColLabel}>{s.name}</div>
+              ))}
+            </div>
+            <div style={S.flowGrid} aria-hidden>
+              {STAGES.map((s, i) => (
+                <div key={s.name} style={{ ...S.flowGridCol, borderLeft: i === 0 ? "none" : "1px dashed rgba(10,31,60,0.08)" }} />
+              ))}
+            </div>
+            <div style={S.flowRows}>
+              {FINDINGS.map((f) => {
+                const lane = laneFor(f, tick);
+                const d = DECISIONS[f.decision];
+                const tone = TONE[d.tone];
+                const isSel = selected.id === f.id;
+                const leftPct = (lane / (STAGES.length - 1)) * 100;
+                return (
+                  <div key={f.id} style={S.flowTrack}>
+                    <button
+                      onClick={() => setSelected(f)}
+                      className="ff-card"
+                      style={{
+                        ...S.flowCard,
+                        left: `calc(${leftPct}% - ${leftPct * 1.75}px)`,
+                        borderColor: isSel ? tone.fg : "rgba(10,31,60,0.12)",
+                        boxShadow: isSel ? `0 3px 14px ${tone.ring}, 0 0 0 2px ${tone.ring}` : S.flowCard.boxShadow,
+                      }}
+                    >
+                      <span style={{ ...S.flowDot, background: tone.fg }} className={isSel ? "dot-pulse" : ""} />
+                      <span style={S.flowId}>{f.id}</span>
+                      <span style={S.flowCtrl}>{f.control}</span>
+                      {d.skipsReview && lane >= 4 && <span style={S.flowSkip}>↷ skipped</span>}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={S.legend}>
+            {[["agent", "Auto-cleared"], ["alert", "Escalated"], ["warn", "Needs input"]].map(([k, lbl]) => (
+              <span key={k} style={S.legendItem}>
+                <span style={{ ...S.legendDot, background: TONE[k].fg }} />
+                {lbl}
+              </span>
+            ))}
+            <span style={{ ...S.legendItem, marginLeft: "auto" }}>
+              <span style={S.glyphMini}><AgentGlyph /></span> agent
+              <span style={{ ...S.glyphMini, marginLeft: 12 }}><HumanGlyph /></span> human
+            </span>
+          </div>
+
+          <div style={S.dispoBlock}>
+            <DispositionDonut />
+          </div>
+        </section>
+
+        {/* RIGHT — intelligence */}
+        <section style={S.intelPane}>
+          <SectionLabel n="02" title="Decision intelligence" sub="The agent's reasoning, control mapping, and tamper-evident evidence chain for the selected finding." dark />
+
+          <div style={S.caseHead}>
+            <div>
+              <div style={S.caseId}>{selected.id}</div>
+              <div style={S.caseTitle}>{selected.title}</div>
+            </div>
+            <DecisionBadge decision={selected.decision} />
+          </div>
+
+          <div style={S.metaGrid}>
+            <MetaCell label="NIST control" value={selected.control} mono />
+            <MetaCell label="Severity" value={selected.severity} />
+            <MetaCell label="Rule fired" value={selected.rule} mono />
+          </div>
+
+          <div style={S.confBlock}>
+            <ConfBar label="Scanner confidence" value={selected.scanner} />
+            <ConfBar label="Control-match score" value={selected.match} />
+            <div style={S.threshold}><span style={S.thresholdMark} /> Auto-clear threshold · 0.65</div>
+          </div>
+
+          <div style={S.reasonBlock}>
+            <div style={S.reasonLabel}>Agent reasoning</div>
+            <p style={S.reasonText}>{selected.reasoning}</p>
+          </div>
+
+          <div style={S.evidenceBlock}>
+            <div style={S.reasonLabel}>Evidence chain</div>
+            {selected.evidence.length === 0 ? (
+              <div style={S.evidenceEmpty}>No evidence attached — finding cannot be adjudicated until artifacts are supplied.</div>
+            ) : (
+              <div style={S.evidenceList}>
+                {selected.evidence.map((e, i) => (
+                  <div key={e} style={S.evidenceItem}>
+                    <span style={S.evidenceHash}>{hashStub(e, i)}</span>
+                    <span style={S.evidenceName}>{e}</span>
+                    <span style={S.evidenceCheck}>✓</span>
+                  </div>
+                ))}
+                <div style={S.chainNote}>SHA-256 hash-chained · tamper-evident</div>
+              </div>
+            )}
+          </div>
+
+          <div style={S.pathBlock}>
+            <div style={S.reasonLabel}>Disposition path</div>
+            <div style={S.pathRow}>
+              {STAGES.map((s, i) => {
+                const skip = DECISIONS[selected.decision].skipsReview && s.name === "Review";
+                return (
+                  <span key={s.name} style={S.pathStepWrap}>
+                    <span style={{ ...S.pathStep, ...(skip ? S.pathStepSkip : {}) }}>
+                      {skip ? "Review (skipped)" : s.name}
+                    </span>
+                    {i < STAGES.length - 1 && <span style={S.pathArrow}>→</span>}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <footer style={S.footer}>
+        <span>FedClear Adjudication Console</span>
+        <span style={S.footMuted}>Synthetic data · NIST 800-53 controls are real · Demo build</span>
+      </footer>
+    </div>
+  );
+}
+
+// --------------------------- sub-components --------------------------------
+
+function SectionLabel({ n, title, sub, dark }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ ...S.secEyebrow, color: dark ? "rgba(245,242,233,0.55)" : "rgba(10,31,60,0.5)" }}>
+        <span style={{ color: "#C8A45C" }}>{n}</span> / {title}
+      </div>
+      <div style={{ ...S.secSub, color: dark ? "rgba(245,242,233,0.7)" : "rgba(10,31,60,0.62)" }}>{sub}</div>
+    </div>
+  );
+}
+
+function CountMetric({ value, label, accent, suffix = "" }) {
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let raf, start;
+    const dur = 900;
+    const step = (ts) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / dur, 1);
+      setN(Math.round(value * (0.5 - Math.cos(p * Math.PI) / 2)));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+  return (
+    <div style={S.metric}>
+      <div style={{ ...S.metricVal, color: accent || "#F5F2E9" }}>{n}{suffix}</div>
+      <div style={S.metricLbl}>{label}</div>
+    </div>
+  );
+}
+
+function DecisionBadge({ decision }) {
+  const d = DECISIONS[decision];
+  const t = TONE[d.tone];
+  return <span style={{ ...S.badge, color: t.fg, background: t.bg, borderColor: t.ring }}>{d.label}</span>;
+}
+
+function MetaCell({ label, value, mono }) {
+  return (
+    <div style={S.metaCell}>
+      <div style={S.metaLbl}>{label}</div>
+      <div style={{ ...S.metaVal, fontFamily: mono ? "'IBM Plex Mono', monospace" : "inherit" }}>{value}</div>
+    </div>
+  );
+}
+
+function ConfBar({ label, value }) {
+  const pct = Math.round(value * 100);
+  const below = value < 0.65;
+  return (
+    <div style={S.confRow}>
+      <div style={S.confTop}>
+        <span style={S.confLabel}>{label}</span>
+        <span style={{ ...S.confPct, color: below ? "#E08A8A" : "#7FCEDC" }}>{pct}%</span>
+      </div>
+      <div style={S.confTrack}>
+        <div className="conf-fill" style={{ ...S.confFill, width: `${pct}%`, background: below ? "#C24A4A" : "#3A9AAB" }} />
+        <div style={S.confThresholdLine} />
+      </div>
+    </div>
+  );
+}
+
+function AgentGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+      <circle cx="12" cy="12" r="3.4" fill="#3A9AAB" />
+      <circle className="orbit-a" cx="12" cy="12" r="7" fill="none" stroke="#3A9AAB" strokeWidth="1" strokeDasharray="2 3" opacity="0.7" />
+      <circle cx="19" cy="12" r="1.5" fill="#5BC2D4" />
+      <circle cx="5" cy="12" r="1.5" fill="#5BC2D4" />
+      <circle cx="12" cy="5" r="1.2" fill="#5BC2D4" opacity="0.8" />
+    </svg>
+  );
+}
+
+function HumanGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+      <circle cx="12" cy="8" r="3.2" fill="none" stroke="#0A1F3C" strokeWidth="1.5" />
+      <path d="M5.5 19 C5.5 14.5 8.5 13 12 13 C15.5 13 18.5 14.5 18.5 19" fill="none" stroke="#0A1F3C" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="18" cy="17" r="4.4" fill="#C8A45C" />
+      <path d="M16.2 17 l1.3 1.3 l2.4 -2.6" fill="none" stroke="#0A1F3C" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Disposition mix donut — auto-cleared / escalated / needs-input
+function DispositionDonut() {
+  const groups = useMemo(() => {
+    const by = { agent: 0, alert: 0, warn: 0 };
+    FINDINGS.forEach((f) => { by[DECISIONS[f.decision].tone] += 1; });
+    return by;
+  }, []);
+  const total = FINDINGS.length;
+  const order = [
+    { key: "agent", label: "Auto-cleared" },
+    { key: "alert", label: "Escalated" },
+    { key: "warn", label: "Needs input" },
+  ];
+  const R = 52, C = 2 * Math.PI * R, GAP = 6; // px gap between arcs
+  const [draw, setDraw] = useState(0);
+  useEffect(() => {
+    let raf, start;
+    const step = (ts) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / 1100, 1);
+      setDraw(0.5 - Math.cos(p * Math.PI) / 2);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  let offset = 0;
+  const arcs = order.map((o) => {
+    const frac = groups[o.key] / total;
+    const len = Math.max(frac * C - GAP, 0);
+    const arc = { ...o, len, dashOffset: -offset, count: groups[o.key] };
+    offset += frac * C;
+    return arc;
+  });
+
+  return (
+    <div style={S.donutWrap}>
+      <div style={S.donutChartWrap}>
+        <svg viewBox="0 0 130 130" width="132" height="132" style={{ transform: "rotate(-90deg)" }}>
+          <circle cx="65" cy="65" r={R} fill="none" stroke="rgba(10,31,60,0.07)" strokeWidth="13" />
+          {arcs.map((a) => (
+            <circle
+              key={a.key}
+              cx="65" cy="65" r={R} fill="none"
+              stroke={TONE[a.key].fg}
+              strokeWidth="13"
+              strokeLinecap="round"
+              strokeDasharray={`${a.len * draw} ${C}`}
+              strokeDashoffset={a.dashOffset}
+              style={{ transition: "stroke-dasharray 0.1s linear" }}
+            />
+          ))}
+        </svg>
+        <div style={S.donutCenter}>
+          <div style={S.donutTotal}>{total}</div>
+          <div style={S.donutTotalLbl}>findings</div>
+        </div>
+      </div>
+      <div style={S.donutLegend}>
+        <div style={S.donutLegendTitle}>Disposition mix</div>
+        {arcs.map((a) => (
+          <div key={a.key} style={S.donutLegendRow}>
+            <span style={{ ...S.legendDot, background: TONE[a.key].fg }} />
+            <span style={S.donutLegendLbl}>{a.label}</span>
+            <span style={{ ...S.donutLegendVal, color: TONE[a.key].fg }}>{a.count}</span>
+          </div>
+        ))}
+        <div style={S.donutFoot}>
+          <span style={{ color: TONE.agent.fg, fontWeight: 600 }}>{Math.round((groups.agent / total) * 100)}%</span> cleared autonomously
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Seal() {
+  return (
+    <svg viewBox="0 0 48 48" width="44" height="44" role="img" aria-label="FedClear seal">
+      <circle cx="24" cy="24" r="22" fill="none" stroke="#C8A45C" strokeWidth="1.5" />
+      <circle cx="24" cy="24" r="17" fill="none" stroke="rgba(200,164,92,0.5)" strokeWidth="0.75" strokeDasharray="1 2" />
+      <path d="M24 9 L37 16 V25 C37 33 31 38 24 40 C17 38 11 33 11 25 V16 Z" fill="none" stroke="#F5F2E9" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M18 24 l4 4 l8 -9" fill="none" stroke="#C8A45C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function hashStub(s, salt) {
+  let h = (0x811c9dc5 ^ salt) >>> 0;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 0x01000193) >>> 0; }
+  return h.toString(16).padStart(8, "0").slice(0, 8);
+}
+
+// ------------------------------- styles ------------------------------------
+
+const NAVY = "#0A1F3C";
+const PARCH = "#F5F2E9";
+const GOLD = "#C8A45C";
+
+const S = {
+  root: { fontFamily: "'Inter', system-ui, sans-serif", background: PARCH, color: NAVY, minHeight: "100vh", display: "flex", flexDirection: "column" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16, padding: "20px 28px", background: "linear-gradient(135deg, #0A1F3C 0%, #102a4f 100%)", color: PARCH, borderBottom: `2px solid ${GOLD}` },
+  brandRow: { display: "flex", alignItems: "center", gap: 14 },
+  seal: { flexShrink: 0 },
+  h1: { margin: 0, fontFamily: "'Fraunces', Georgia, serif", fontSize: 32, fontWeight: 600, letterSpacing: "-0.01em", color: PARCH },
+  tagline: { margin: "2px 0 0", fontSize: 12.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(245,242,233,0.6)" },
+  headerMeta: { display: "flex", alignItems: "center", gap: 26 },
+  metric: { textAlign: "right" },
+  metricVal: { fontFamily: "'Fraunces', Georgia, serif", fontSize: 26, fontWeight: 600, lineHeight: 1 },
+  metricLbl: { fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(245,242,233,0.55)", marginTop: 4 },
+  pauseBtn: { background: "transparent", border: `1px solid ${GOLD}`, color: GOLD, padding: "8px 14px", borderRadius: 2, fontSize: 12, letterSpacing: "0.05em", cursor: "pointer" },
+
+  ticker: { display: "flex", alignItems: "center", gap: 10, padding: "9px 28px", background: "#08182f", color: "rgba(245,242,233,0.85)", fontSize: 12.5, borderBottom: "1px solid rgba(200,164,92,0.18)" },
+  tickerDot: { width: 8, height: 8, borderRadius: "50%", background: "#5BC2D4", flexShrink: 0 },
+  tickerLabel: { textTransform: "uppercase", letterSpacing: "0.08em", fontSize: 10.5, color: "rgba(245,242,233,0.5)" },
+  tickerId: { fontFamily: "'IBM Plex Mono', monospace", color: GOLD, fontWeight: 600 },
+  tickerSep: { color: "rgba(245,242,233,0.3)" },
+  tickerText: { color: "rgba(245,242,233,0.8)" },
+  tickerCtrl: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: "rgba(245,242,233,0.5)", marginLeft: "auto" },
+
+  split: { display: "flex", flex: 1, minHeight: 0 },
+  pipelinePane: { flex: "1 1 56%", padding: "26px 28px", borderRight: "1px solid rgba(10,31,60,0.1)", display: "flex", flexDirection: "column", minWidth: 0, background: "radial-gradient(circle at 30% 0%, rgba(200,164,92,0.05), transparent 60%)" },
+  intelPane: { flex: "1 1 44%", padding: "26px 28px", background: "linear-gradient(160deg, #0A1F3C, #0c2b52)", color: PARCH, display: "flex", flexDirection: "column", minWidth: 0 },
+
+  secEyebrow: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 500 },
+  secSub: { fontSize: 13, marginTop: 6, lineHeight: 1.5, maxWidth: 470 },
+
+  rail: { display: "flex", alignItems: "stretch", position: "relative", marginTop: 14, marginBottom: 10 },
+  railCol: { display: "flex", alignItems: "center", flex: 1 },
+  railNode: { background: "#fff", border: "1px solid rgba(10,31,60,0.14)", borderRadius: 4, padding: "11px 12px", flex: 1, display: "flex", flexDirection: "column", gap: 4, position: "relative", minHeight: 92 },
+  railNodeAgent: { borderColor: "rgba(58,154,171,0.5)", background: "linear-gradient(180deg, #fff, rgba(58,154,171,0.05))" },
+  railNodeReview: { borderColor: "rgba(194,74,74,0.4)", borderStyle: "dashed" },
+  railNodeFinal: { borderColor: GOLD },
+  railHead: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  glyphWrap: { display: "flex" },
+  railNum: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: GOLD },
+  railName: { fontFamily: "'Fraunces', Georgia, serif", fontSize: 15, fontWeight: 600 },
+  actorTag: { fontSize: 9.5, letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 600 },
+  liveCount: { position: "absolute", top: -9, right: -9, minWidth: 19, height: 19, padding: "0 5px", borderRadius: 10, background: NAVY, color: PARCH, fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", border: `1.5px solid ${GOLD}` },
+  railConnector: { width: 22, height: 2, background: "rgba(10,31,60,0.12)", flexShrink: 0, position: "relative", overflow: "hidden" },
+  flowDash: { position: "absolute", top: 0, left: 0, height: "100%", width: 10, background: GOLD },
+  bypassNote: { position: "absolute", right: 0, top: -26, fontSize: 10.5, color: "rgba(194,74,74,0.75)", display: "flex", alignItems: "center", gap: 6, fontStyle: "italic" },
+  bypassDash: { width: 22, height: 0, borderTop: "1.5px dashed #C24A4A", display: "inline-block" },
+
+  flowCaption: { display: "flex", alignItems: "baseline", gap: 10, marginTop: 14, marginBottom: 2 },
+  flowCaptionTitle: { fontFamily: "'Fraunces', Georgia, serif", fontSize: 14, fontWeight: 600, color: NAVY },
+  flowCaptionHint: { fontSize: 11, color: "rgba(10,31,60,0.45)", fontStyle: "italic" },
+  flowArea: { position: "relative", marginTop: 8, background: "linear-gradient(180deg, rgba(10,31,60,0.025), transparent)", borderRadius: 6, border: "1px solid rgba(10,31,60,0.06)", padding: "30px 0 8px", overflow: "hidden" },
+  flowColHead: { position: "absolute", top: 0, left: 0, right: 0, height: 26, display: "flex", borderBottom: "1px solid rgba(10,31,60,0.07)" },
+  flowColLabel: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9.5, letterSpacing: "0.07em", textTransform: "uppercase", color: "rgba(10,31,60,0.4)", fontWeight: 600 },
+  flowGrid: { position: "absolute", top: 26, bottom: 0, left: 0, right: 0, display: "flex", pointerEvents: "none" },
+  flowGridCol: { flex: 1, height: "100%" },
+  flowRows: { position: "relative", display: "flex", flexDirection: "column", gap: 6 },
+  flowTrack: { position: "relative", height: 34 },
+  flowCard: { position: "absolute", top: "50%", transform: "translateY(-50%)", transition: "left 2.6s cubic-bezier(0.45,0,0.25,1), box-shadow 0.25s", background: "#fff", border: "1px solid rgba(10,31,60,0.12)", borderRadius: 5, padding: "6px 11px", boxShadow: "0 1px 6px rgba(10,31,60,0.08)", display: "flex", alignItems: "center", gap: 8, cursor: "pointer", minWidth: 150, whiteSpace: "nowrap" },
+  flowDot: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 },
+  flowId: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 12.5, fontWeight: 600 },
+  flowCtrl: { fontSize: 11, color: "rgba(10,31,60,0.55)", fontFamily: "'IBM Plex Mono', monospace" },
+  flowSkip: { fontSize: 9.5, color: "#C24A4A", fontStyle: "italic", marginLeft: 2 },
+
+  legend: { display: "flex", gap: 20, marginTop: 16, paddingTop: 18, alignItems: "center" },
+  legendItem: { display: "flex", alignItems: "center", gap: 7, fontSize: 12, color: "rgba(10,31,60,0.7)" },
+  legendDot: { width: 9, height: 9, borderRadius: "50%" },
+  glyphMini: { display: "inline-flex", verticalAlign: "middle" },
+
+  dispoBlock: { marginTop: 18, paddingTop: 18, borderTop: "1px solid rgba(10,31,60,0.1)" },
+  donutWrap: { display: "flex", alignItems: "center", gap: 26 },
+  donutChartWrap: { position: "relative", flexShrink: 0, width: 132, height: 132 },
+  donutCenter: { position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" },
+  donutTotal: { fontFamily: "'Fraunces', Georgia, serif", fontSize: 34, fontWeight: 600, lineHeight: 1, color: NAVY },
+  donutTotalLbl: { fontSize: 10, letterSpacing: "0.07em", textTransform: "uppercase", color: "rgba(10,31,60,0.45)", marginTop: 3 },
+  donutLegend: { flex: 1, minWidth: 0 },
+  donutLegendTitle: { fontFamily: "'Fraunces', Georgia, serif", fontSize: 15, fontWeight: 600, color: NAVY, marginBottom: 10 },
+  donutLegendRow: { display: "flex", alignItems: "center", gap: 9, padding: "4px 0" },
+  donutLegendLbl: { fontSize: 13, color: "rgba(10,31,60,0.72)" },
+  donutLegendVal: { marginLeft: "auto", fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, fontWeight: 600 },
+  donutFoot: { marginTop: 10, paddingTop: 9, borderTop: "1px dashed rgba(10,31,60,0.12)", fontSize: 12, color: "rgba(10,31,60,0.6)" },
+
+  caseHead: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14, paddingBottom: 16, borderBottom: "1px solid rgba(245,242,233,0.14)" },
+  caseId: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: GOLD, letterSpacing: "0.04em" },
+  caseTitle: { fontFamily: "'Fraunces', Georgia, serif", fontSize: 20, fontWeight: 600, marginTop: 4, lineHeight: 1.25, color: PARCH },
+  badge: { fontSize: 11.5, fontWeight: 600, padding: "6px 11px", borderRadius: 2, border: "1px solid", whiteSpace: "nowrap" },
+
+  metaGrid: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1, background: "rgba(245,242,233,0.1)", margin: "18px 0", border: "1px solid rgba(245,242,233,0.1)" },
+  metaCell: { background: NAVY, padding: "12px 14px" },
+  metaLbl: { fontSize: 10, letterSpacing: "0.07em", textTransform: "uppercase", color: "rgba(245,242,233,0.5)" },
+  metaVal: { fontSize: 16, fontWeight: 600, marginTop: 5, color: PARCH },
+
+  confBlock: { margin: "4px 0 20px" },
+  confRow: { marginBottom: 12 },
+  confTop: { display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 },
+  confLabel: { color: "rgba(245,242,233,0.75)" },
+  confPct: { fontFamily: "'IBM Plex Mono', monospace", fontWeight: 600 },
+  confTrack: { position: "relative", height: 7, background: "rgba(245,242,233,0.1)", borderRadius: 4, overflow: "hidden" },
+  confFill: { height: "100%", borderRadius: 4, transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)" },
+  confThresholdLine: { position: "absolute", left: "65%", top: -2, bottom: -2, width: 1.5, background: GOLD, opacity: 0.7 },
+  threshold: { fontSize: 11, color: "rgba(245,242,233,0.55)", display: "flex", alignItems: "center", gap: 7, marginTop: 4 },
+  thresholdMark: { width: 10, height: 2, background: GOLD, display: "inline-block" },
+
+  reasonBlock: { marginBottom: 18 },
+  reasonLabel: { fontSize: 10.5, letterSpacing: "0.07em", textTransform: "uppercase", color: GOLD, marginBottom: 8 },
+  reasonText: { margin: 0, fontSize: 14, lineHeight: 1.6, color: "rgba(245,242,233,0.9)" },
+
+  evidenceBlock: { marginBottom: 18 },
+  evidenceList: { display: "flex", flexDirection: "column", gap: 7 },
+  evidenceItem: { display: "flex", alignItems: "center", gap: 11, background: "rgba(245,242,233,0.06)", padding: "8px 11px", borderRadius: 3, border: "1px solid rgba(245,242,233,0.08)" },
+  evidenceHash: { fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: "#7FCEDC" },
+  evidenceName: { fontSize: 12.5, color: "rgba(245,242,233,0.8)" },
+  evidenceCheck: { marginLeft: "auto", color: "#5BC2D4", fontSize: 13 },
+  evidenceEmpty: { fontSize: 13, color: "#E08A8A", fontStyle: "italic", lineHeight: 1.5, background: "rgba(194,74,74,0.1)", padding: "10px 12px", borderRadius: 3, border: "1px solid rgba(194,74,74,0.25)" },
+  chainNote: { fontSize: 10.5, color: "rgba(245,242,233,0.45)", letterSpacing: "0.04em", marginTop: 3 },
+
+  pathBlock: { marginTop: "auto" },
+  pathRow: { display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6 },
+  pathStepWrap: { display: "flex", alignItems: "center", gap: 6 },
+  pathStep: { fontSize: 11.5, padding: "5px 9px", background: "rgba(245,242,233,0.08)", borderRadius: 2, color: "rgba(245,242,233,0.85)", whiteSpace: "nowrap" },
+  pathStepSkip: { background: "rgba(194,74,74,0.12)", color: "#E08A8A", textDecoration: "line-through", textDecorationColor: "rgba(224,138,138,0.6)" },
+  pathArrow: { color: "rgba(245,242,233,0.35)", fontSize: 12 },
+
+  footer: { display: "flex", justifyContent: "space-between", padding: "12px 28px", background: NAVY, color: "rgba(245,242,233,0.5)", fontSize: 11.5, borderTop: "1px solid rgba(200,164,92,0.3)" },
+  footMuted: { color: "rgba(245,242,233,0.35)" },
+};
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+* { box-sizing: border-box; }
+.ff-card:hover { transform: translateY(-50%) scale(1.02) !important; z-index: 5; }
+.ff-card:focus-visible { outline: 2px solid ${GOLD}; outline-offset: 2px; }
+.pause-btn:hover { background: rgba(200,164,92,0.15); }
+
+@keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(58,154,171,0.4);} 70%{box-shadow:0 0 0 8px rgba(58,154,171,0);} 100%{box-shadow:0 0 0 0 rgba(58,154,171,0);} }
+.agent-node { animation: pulse-ring 2.4s infinite; }
+
+@keyframes ticker-pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.4;transform:scale(0.8);} }
+.ticker-pulse { animation: ticker-pulse 1.4s infinite; }
+
+@keyframes dot-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.5);} }
+.dot-pulse { animation: dot-pulse 1.2s infinite; }
+
+@keyframes flow-move { 0%{left:-12px;} 100%{left:24px;} }
+.flow-dash { animation: flow-move 3s linear infinite; opacity: 0.6; }
+
+@keyframes orbit { 0%{transform:rotate(0deg);} 100%{transform:rotate(360deg);} }
+.orbit-a { transform-origin: 12px 12px; animation: orbit 6s linear infinite; }
+
+@keyframes seal-spin { 0%{transform:rotate(0);} 100%{transform:rotate(360deg);} }
+.seal-spin svg circle:nth-child(2) { transform-origin: 24px 24px; animation: seal-spin 40s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-node, .ticker-pulse, .dot-pulse, .flow-dash, .orbit-a, .seal-spin svg circle:nth-child(2) { animation: none !important; }
+}
+@media (max-width: 900px) {
+  [data-split] { flex-direction: column; }
+}
+`;

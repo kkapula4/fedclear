@@ -1,0 +1,1 @@
+{"FindingID":"ATO-10023","FindingJSON":"{\"id\":\"ATO-10023\",\"severity_hint\":\"Low\",\"suggested_nist_control\":\"AU-2\",\"title\":\"Standard audit log config\",\"raw_description\":\"Clean AU-2 mapping, high confidence, no gaps.\",\"confidence_inputs\":{\"scanner_confidence\":0.97,\"control_match_score\":0.95},\"finding_type\":\"auto_clearable\"}"} 

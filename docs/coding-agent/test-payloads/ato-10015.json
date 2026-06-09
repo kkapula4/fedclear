@@ -1,0 +1,4 @@
+{
+  "FindingID": "ATO-10015",
+  "FindingJSON": "{\"id\": \"ATO-10015\", \"source_system\": \"synthetic-scan-aggregator-v1\", \"title\": \"Conflicting NIST mapping: encryption-at-rest coverage gap on backup systems\", \"raw_description\": \"Scanner detected unencrypted backup volumes on secondary storage nodes. Control mapping ambiguous between SC-28 (Protection of Information at Rest), SC-13 (Cryptographic Protection), and MP-5 (Media Transport). Synthetic data, no real system.\", \"severity_hint\": \"High\", \"suggested_nist_control\": \"SC-28\", \"alternate_controls\": [\"SC-13\", \"MP-5\"], \"evidence_refs\": [\"mock-evidence/scan-2026-06-01-015.txt\"], \"timestamp\": \"2026-06-01T20:00:00Z\", \"confidence_inputs\": {\"scanner_confidence\": 0.59, \"control_match_score\": 0.53}, \"finding_type\": \"conflicting_mapping\", \"_notes\": \"SCRUM-28 Review + Sign-off stage test — escalation via conflicting NIST mapping; safe to delete after SCRUM-28 sign-off\"}"
+}
