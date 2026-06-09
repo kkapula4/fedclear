@@ -34,3 +34,8 @@ real-data/
 /findstr
 agents/__pycache__/
 *.pyc
+
+# MCP atlas-evidence runtime output
+mcp/atlas-evidence/output/
+mcp/atlas-evidence/**/__pycache__/
+mcp/**/*.pyc
