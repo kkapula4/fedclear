@@ -16,7 +16,7 @@ obj/
 .DS_Store
 Thumbs.db
 
-# Secrets — never commit credentials or real data
+# Secrets - never commit credentials or real data
 .env
 *.secret
 secrets/
@@ -24,3 +24,13 @@ real-data/
 
 # Logs
 *.log
+
+# CLI scratch output
+/caselist*.json
+/elemexec.json
+/exec*.json
+/vars.json
+/uip
+/findstr
+agents/__pycache__/
+*.pyc
