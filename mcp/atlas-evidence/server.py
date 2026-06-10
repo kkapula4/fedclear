@@ -267,4 +267,5 @@ def log_adjudication_evidence(
 # ─────────────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    mcp.run()
+    import sys
+    mcp.run(transport="streamable-http" if "--transport" in sys.argv else "stdio")
